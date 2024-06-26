@@ -7,7 +7,6 @@ pub mod evm_key_pair {
     use super::*;
 
     pub fn create(ctx: Context<CreateContext>) -> Result<()> {
-        // create a file
         ctx.accounts.note.user = ctx.accounts.user.key();
         ctx.accounts.note.content = "123".to_string();
         Ok(())
@@ -17,6 +16,19 @@ pub mod evm_key_pair {
         ctx.accounts.note.content = content.clone();
         Ok(())
     }
+
+    pub fn delete(ctx: Context<DeleteContext>) -> Result<()>{
+        let note = &mut ctx.accounts.note;
+        let user = &ctx.accounts.user;
+
+        **user.to_account_info().try_borrow_mut_lamports()? += note.to_account_info().lamports();
+        **note.to_account_info().try_borrow_mut_lamports()? = 0;
+
+        let _ = note.close(user.to_account_info());
+
+        Ok(())
+    }
+
 }
 
 #[derive(Accounts)]
@@ -36,9 +48,16 @@ pub struct EditContext<'info> {
     #[account(mut, has_one=user)]
     pub note: Account<'info, Note>,
     #[account(mut)]
-    pub renter: Signer<'info>,
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DeleteContext<'info> {
+    #[account(mut, has_one = user, close = user)]
+    pub note: Account<'info, Note>,
+    #[account(mut)]
+    pub user: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -47,7 +66,10 @@ pub struct EditContext<'info> {
 #[account]
 #[derive(InitSpace)]
 pub struct Note {
-    user: Pubkey,
+        // convert address and signature to Uint8Array
+        // const ethAddress = hexToUint8Array(addr.slice(2), 20); length of the ethereum address is 44 bytes TDOO find this out
+        // user: [u8,44], // change to ethereum pubkey
+    user: Pubkey, // change to ethereum pubkey 
     #[max_len(20)]
     content: String,
 }
