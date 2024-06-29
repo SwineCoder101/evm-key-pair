@@ -64,7 +64,7 @@ describe("evm-key-pair", () => {
   }
 
 
-  it ("can create note", async () => {
+  it ("can create, edit and delete note", async () => {
     // Create a new note.
     const noteAccount1=await createNote();
     const noteAccount2 = await createNote();
